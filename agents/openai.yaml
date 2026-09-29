@@ -1,0 +1,4 @@
+interface:
+  display_name: "跨境吴老师 Amazon细分类目进入评分与分级 Skill"
+  short_description: "卖家精灵类目数据六项评分、S至D分级与离线看板"
+  default_prompt: "使用 $kuajing-wulaoshi-amazon-category-entry-scoring-skill，根据我提供的商品关键词或类目路径生成细分类目进入评分看板。"
