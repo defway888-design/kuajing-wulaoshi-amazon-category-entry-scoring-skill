@@ -8,18 +8,18 @@
 1. 必需输入为商品关键词或明确的 Amazon 类目路径。站点默认 US。未指定锚点年月时，以执行当日所在的 YYYY-MM 为锚点；锚点同时定义近30天截面所属报告月份、完整自然月趋势窗口和上新目标年份，不得混用不同锚点的数据。
 2. 先完成本 Skill 入口规定的版本与 MCP 前置检查，再依据当前环境实际工具说明、入参 schema 和响应绑定业务能力。下文工具名和字段名是业务语义提示，不保证跨环境字面相同。除本 Skill 包内相对引用的业务规则与模板外，不得依赖其他本机技能、索引、配置或其他用户机器上的文件；不得换用其他数据源。
 3. 中文关键词先解析核心商品、人群、用途、套装/配件等限定，以 3~5 个英文类目检索词作为初始种子；结合检索结果继续扩展同义词、常见译法、相关父节点及其子节点，不把初始词数当成搜索上限。按工具实际分页规则查完相关结果，按 nodeIdPath/等价唯一标识去重，核对每条完整类目路径与商品语义；仅词面相似但商品、人群或用途不符的路径不能入围。用户给定类目路径时先验证该路径。关键词仅用于定位，不进入六项指标的取数范围。
-4. 对已发现的语义合理叶子类目，检查相关父节点的其他合理子类目及搜索别名是否遗漏，并在内部记录候选路径、唯一标识、检索来源与排除理由。多个候选均语义合理时，逐一取得同一站点、同一锚点近30天截面下的完整 Top100 商品样本 Units 合计，统一按该样本销量从高到低选类目；不得把样本合计称作全类目销量。优先使用经样本数核验、明确属于 Top100 样本的 totalUnits/等价合计，或从完整 Listing 明细求和；不能将均值固定乘以100来推算。候选类目使用相同的样本选取、日期与统计口径，并记录实际样本数。若结果分页不完整、明显存在未检索的合理分支，或某候选没有可比的完整样本销量，列出候选和缺口，请用户确认；不得把“已发现候选中的最大样本销量”冒称为全部相关类目的最大销量，也不得用销售额、商品数或词面相似度替代销量。类目确定后，六项接口统一使用同一 nodeIdPath/等价类目唯一标识。
+4. 对已发现的语义合理叶子类目，检查相关父节点的其他合理子类目及搜索别名是否遗漏，并在内部记录候选路径、唯一标识、检索来源与排除理由。多个候选均语义合理时，逐一取得同一站点、同一锚点近30天截面下的完整 Top100 请求结果中实际商品样本 Units 合计，统一按该样本销量从高到低选类目；不得把样本合计称作全类目销量。优先使用经样本数核验、明确属于该样本的 totalUnits/等价合计，或从完整 Listing 明细求和；不能将均值固定乘以100来推算。候选类目使用相同的样本选取、日期与统计口径，并记录各自实际样本数；某候选实得不足100件但请求结果完整时仍可比较，须保留样本覆盖不同会影响排序的限制。若结果分页不完整、明显存在未检索的合理分支，或某候选没有可比的完整样本销量，列出候选和缺口，请用户确认；不得把“已发现候选中的最大样本销量”冒称为全部相关类目的最大销量，也不得用销售额、商品数或词面相似度替代销量。类目确定后，六项接口统一使用同一 nodeIdPath/等价类目唯一标识。
 5. 不按固定层级数停止下探；选择路径语义完整、能够稳定返回所需类目市场数据的最细叶子类目。不得预设排除任何 Amazon 大类。工具归属、输入、字段语义或类目匹配无法确认时，列出事实原因并停止。
 
 二、时间与样本口径
 1. 默认锚点为执行当月时，指标1、3、4、5、6取卖家精灵当前近30天截面；指定过去的锚点月时，这五项必须统一取得该锚点月对应的卖家精灵历史近30天截面，不能把当前截面与历史趋势或历史上架年份目标拼接。核对这五项响应各自声明的报告月及实际日期窗口；任一接口明显不在同一截面且无法确认可比时停止。只有历史截面工具明确支持对应月份及同口径字段时，才按其实际 schema 传历史参数；不得向当前截面接口强行传历史 month。指标2始终取锚点月之前的24个完整自然月，逐月按工具实际 schema 请求。页面分别标注截面所属月份/可确认时间与24个完整自然月趋势，不得笼统写成同一个数据月。
 2. 以锚点月第一天为界：最近12个月为之前的第12个月至第1个月；前12个月为之前的第24个月至第13个月。使用真实日历月份加减法，跨年自动回退。例如锚点为某年1月时，上一完整月是前一年12月；不得拼接出00月。若当前月未结束，不得把当前月放入完整自然月序列。
 3. 任何过去锚点都视为历史截面请求；历史截面、历史自然月趋势或所需字段不可得时，说明缺口并停止，不退回当前近30天数据。未来锚点、尚无完整趋势月份的锚点也停止，不虚构月份。若接口仅报告“近30天”而不返回精确起止日，保留查询日期或报告月份并注明精确起止未知，不推算伪造日期。
-4. 指标1采用确认叶子类目近30天截面的 Top100 商品样本月均 Units，不是全类目全部商品均值，也不是“头部前N名”默认前10名均值。优先使用 MCP 明确标为该样本均值的字段，同时取得实际样本数；只有字段语义或对应样本数不能确认时，才从同一截面的完整 Top100 Listing 明细计算 `样本 Units 合计/实际样本数`。不能无条件除以100，也不能把24个月趋势中的某月、关键词结果或少量代表性 ASIN 代入近30天截面。指标2采用每个目标月份各自的 Top100 商品样本 Units 合计，连续24个月；对当月完整明细求和，或核验后使用同口径的月度合计。指标1与指标2虽然都基于 Top100 样本，截面期间、商品集合仍可能不同，不得直接按数值差额称数据异常。分布项3~6采用同一节点、同一截面月份、topN=100的样本分母；任何接口的分母与其他接口不同，须明示，不能伪称完全可比。仅当日期、样本集合和分母均一致时才进行跨接口数值对账。所有样本数据都不称作全类目销量。
-5. 对指标1截面及指标2每个月的结果核对分页是否完整、Listing 是否重复、Units 是否为可加总数值、实际返回日期是否对应请求期间，并记录实际样本数。实际样本数必须为1~100；少于100时，只有同一节点商品池确实不足100且样本已穷尽的证据，才按实际完整样本数计算，不得把未收录、漏页或缺少销量的商品当成“类目不足100”。任一必需月份或样本销量缺失即停止，不补零、不插值、不用销售额、BSR、搜索量或 ABA 替代。
+4. 指标1采用确认叶子类目近30天截面的 Top100 请求结果中实际商品样本月均 Units，不是全类目全部商品均值，也不是“头部前N名”默认前10名均值。优先使用 MCP 明确标为该实际样本均值的字段，同时取得实际样本数；只有字段语义或对应样本数不能确认时，才从同一截面的完整 Listing 明细计算 `样本 Units 合计/实际样本数`。不足100件时按实得数量计算，不固定除以100，也不把未返回商品补零；不得把24个月趋势中的某月、关键词结果或少量代表性 ASIN 代入近30天截面。指标2采用每个目标月份各自的 Top100 请求结果中实际商品样本 Units 合计，连续24个月；对当月完整明细求和，或核验后使用同口径的月度合计。指标1与指标2虽然都基于 Top100 请求结果，截面期间、商品集合及实际样本数仍可能不同，不得直接按数值差额称数据异常。分布项3~6对同一节点和截面月份请求 topN=100，但占比必须使用接口实际完整返回的样本分母；不足100件时记录各接口实得数量。任何接口的样本集合或分母与其他接口不同，须明示，不能伪称完全可比。仅当日期、样本集合和分母均一致时才进行跨接口数值对账。所有样本数据都不称作全类目销量。
+5. 对指标1截面及指标2每个月的结果核对是否已按接口分页规则取尽、Listing 是否重复、每条 Units 是否有效、实际返回日期是否对应请求期间，并记录实际样本数；聚合接口须核对其返回的样本数字段和响应完整性，不能只看 topN 参数。实际样本数必须为1~100；即使类目总商品数大于100，只要 Top100 请求结果确实完整返回少于100件且这些商品均有有效销量，就按实际数量继续计算，不因不足100而阻断；不得把漏页、限额截断、筛选误用、重复记录或100件中部分商品缺失销量误算成较小的完整样本。任一必需月份、样本数或样本销量无法确认时停止，不补零、不插值、不用销售额、BSR、搜索量或 ABA 替代。
 
 三、六项字段映射与校验
-1. Top100商品月均销量：先核对类目市场概况的样本数（常见语义 products/topProducts）与样本总销量（常见语义 totalUnits）；部分 MCP 将样本均值称为 avgUnits，不能仅凭字段名判断它是全类目均值。确认实际样本为完整 Top100 后，优先读取对应样本的 avgUnits/等价均值，并用总销量除以样本数核对至返回字段的舍入精度；若没有可信的直接均值，则用完整 Top100 Listing 明细 Units 合计除以实际样本数。直接字段与明细在同一日期、样本和分母下超出舍入误差时停止，不任取其一。hlAvgUnits/topAvgUnits 等“头部前N名”均值不得按默认 N=10 当作 Top100 均值；topN/topNum 参数也可能只控制头部分析数量，设置为100本身不证明实际样本数为100。全类目均值与类目总销量合计不能替代每商品样本均值。
+1. Top100商品月均销量：先核对类目市场概况的实际样本数（常见语义 products/topProducts）与同一实际样本的总销量（常见语义 totalUnits）；部分 MCP 将样本均值称为 avgUnits，不能仅凭字段名判断它是全类目均值。确认 Top100 请求结果已完整返回后，不论实际商品数是否达到100，优先读取对应实际样本的 avgUnits/等价均值，并用总销量除以实际样本数核对至返回字段的舍入精度；若没有可信的直接均值，则用完整 Listing 明细 Units 合计除以实际样本数。直接字段与明细在同一日期、样本和分母下超出舍入误差时停止，不任取其一。hlAvgUnits/topAvgUnits 等“头部前N名”均值不得按默认 N=10 当作 Top100 均值；topN/topNum 参数也可能只控制头部分析数量，设置为100本身不证明实际样本数为100。全类目均值与类目总销量合计不能替代每商品样本均值。
 2. 跨年度趋势：逐月 Top100 商品样本 totalUnits/等价 Units 明细之和，24个月分别记录月份与销量。
 3. 品牌集中度：品牌分布中按月销量占比排序，取前三个不同品牌的销量占比之和。常见语义 totalUnitsRatio；不得用商品数占比替代。
 4. Amazon自营压力：卖家类型分布中 Amazon 自营的月销量占比，常见语义 totalUnitsRatio 或同义字段；不得用卖家数占比替代。若 Amazon 自营缺行，只有确认响应为完整分布且零占比语义明确时才取0，否则视为缺失。
@@ -57,11 +57,11 @@ C级：Total100>=55% 且 MinScore>=20%。建议“暂不进入，重点核查短
 D级：以上均不满足。建议“暂缓”。
 等级只是基于六项得分的经验筛选，不是成功概率、盈利保证或直接备货结论；S/A表示优先进入下一步验证，B表示仅可做低成本测试，C/D不建议直接进入。六项均为60%时为C级。等级不因单项原始规则未达标而封顶，但所有未达标项必须在看板“主要风险”中逐项明确提示，不能让高等级掩盖短板。评分明细表仍按各自原始阈值显示“达标/未达标”，与综合等级相互独立。不得再用单一总分阈值输出二元“可以进入/不建议进入”结论。
 高风险项数 HighRiskCount 仅统计 Score3、Score4 中得分<100/3%的数量，包含尚未触及红线的临界风险。看板总览固定为综合评分、最低单项得分、得分>=70的项数和经验筛选等级；等级卡必须同时显示该等级对应的筛选建议。不得展示红线触发项数、触发率或用同义统计卡替代；各指标是否达标仍在明细表与主要风险中逐项体现。
-数据齐全后，在内部复核类目路径、候选类目 Top100 样本销量比较口径、指标1实际样本数与均值、字段映射、六项原始值与得分、六项达标结论、前12个月与最近12个月的销量及24个月明细、Total100、MinScore、High70Count、Low50Count、综合等级、HighRiskCount和最终建议；按固定模板的校验逻辑再次核对，不通过即停止交付。看板内展示经验等级及对应建议和至少两条带数值的主要依据；主要风险必须逐项列出所有未达标指标及品牌集中度、Amazon自营的中高风险情形，其他风险据实列出，不要求凑足条数，若无可证实风险则明确说明。主要依据、主要风险不得与原始值、达标状态或等级定义矛盾，不得把指标1或候选类目样本销量称作全类目市场规模。看板须注明可确认的截面时间信息、趋势年月范围、指标1实际样本数和Top100样本限制；精确截面起止日不可得时明确写“未返回精确起止日”。成功时只交付下方固定模板生成的单文件HTML看板：能生成文件就仅返回文件链接，不能生成文件就仅返回完整HTML代码块；不另写类目结论、评分表、24个月表或文字总结。交付后等待用户确认，不主动追加分析。只有数据缺失或工具受阻时，才输出最短必要的阻塞说明，且不得生成虚假看板。
+数据齐全后，在内部复核类目路径、候选类目 Top100 样本销量比较口径、指标1实际样本数与均值、各趋势月份实际样本数、字段映射、六项原始值与得分、六项达标结论、前12个月与最近12个月的销量及24个月明细、Total100、MinScore、High70Count、Low50Count、综合等级、HighRiskCount和最终建议；按固定模板的校验逻辑再次核对，不通过即停止交付。看板内展示经验等级及对应建议和至少两条带数值的主要依据；主要风险必须逐项列出所有未达标指标及品牌集中度、Amazon自营的中高风险情形，其他风险据实列出，不要求凑足条数，若无可证实风险则明确说明。主要依据、主要风险不得与原始值、达标状态或等级定义矛盾，不得把指标1或候选类目样本销量称作全类目市场规模。看板须注明可确认的截面时间信息、趋势年月范围和Top100样本限制；指标1或趋势月份的实际样本数不足100时标出对应数量，达到100时不额外显示商品数量。精确截面起止日不可得时明确写“未返回精确起止日”。成功时只交付下方固定模板生成的单文件HTML看板：能生成文件就仅返回文件链接，不能生成文件就仅返回完整HTML代码块；不另写类目结论、评分表、24个月表或文字总结。交付后等待用户确认，不主动追加分析。只有数据缺失或工具受阻时，才输出最短必要的阻塞说明，且不得生成虚假看板。
 
 六、固定 BI 模板执行规则
 以下模板是本提示词的一部分，任何用户运行时都不得读取本机模板路径。仅把占位符 __DASHBOARD_DATA_JSON__ 替换为从 MCP 真实响应计算出的 JSON 对象；HTML/CSS/JS、模块顺序、标签、配色、图表坐标逻辑和交互不得重写。替换后的HTML中不能残留占位符，也不能出现示例数据、外链或本机路径。插入 JSON 时应正确转义嵌入脚本的 < 字符，避免类目名破坏 script 标签。
-JSON字段固定：categoryName、categoryPath、sourceKeyword、site、anchor、snapshotMonth、snapshotWindow、snapshotSampleCount、snapshotTotalUnits、trendWindow、generatedAt、metrics、monthlyUnits、previousPeriod、recentPeriod、total100、grade、highRiskCount、recommendation、reasons、risks。snapshotMonth为截面所属报告月YYYY-MM，须与anchor相同；snapshotWindow写实际可确认的近30天日期范围，若接口未给精确起止则写报告月或查询日期并明确注明“未返回精确起止日”。snapshotSampleCount为指标1经核验的实际完整样本商品数（1~100整数），不是类目商品总数；snapshotTotalUnits为同一截面、同一 Top100 样本的非负 Units 合计。metrics固定6项，依上述顺序，每项仅含 name、short、rawValue、score100、status、source；rawValue为不再人为舍入的数值：指标1为该近30天 Top100 商品样本的每商品月均 Units（直接字段保留提供方返回的数值，明细计算保留商值），须与 snapshotTotalUnits/snapshotSampleCount 在提供方均值字段的精度内一致；指标2为最近12个月Units合计（须等于recentPeriod.total），指标3~6为0~1的小数占比；score100为未舍入的百分制数值；status仅允许“达标”或“未达标”，须与原始阈值比较结果一致。指标1的 source 须写明 Top100 样本数、直接字段或明细计算方式；name依次固定为本节六项指标名称；short依次固定为“Top100均销、跨年度趋势、品牌集中度、Amazon自营、中国卖家优势、上新红利”。grade仅允许“S”“A”“B”“C”“D”，recommendation须与等级对应的固定建议完全一致；最低单项得分和得分>=70的项数由模板根据六项得分计算，不另行手填。评分明细的关键数值及规则阈值由固定模板根据rawValue、锚点和期间合计生成，不另行手填。monthlyUnits固定24项，每项 {month:"YYYY-MM",units:非负数}，按月份升序且连续；previousPeriod/recentPeriod各含 start、end、total。reasons为至少两条带真实数值的字符串；risks为非自动生成的其他可证实风险字符串数组，可为空，不重复六项未达标及指标3/4中高风险的自动提示。JSON中保留未舍入的数值类型；交付前独立核验月份合计、六项得分与结论、综合等级和建议、总分及风险计数与同一份数据一致。
+JSON字段固定：categoryName、categoryPath、sourceKeyword、site、anchor、snapshotMonth、snapshotWindow、snapshotSampleCount、snapshotTotalUnits、trendWindow、generatedAt、metrics、monthlyUnits、previousPeriod、recentPeriod、total100、grade、highRiskCount、recommendation、reasons、risks。snapshotMonth为截面所属报告月YYYY-MM，须与anchor相同；snapshotWindow写实际可确认的近30天日期范围，若接口未给精确起止则写报告月或查询日期并明确注明“未返回精确起止日”。snapshotSampleCount为指标1经核验的实际完整返回商品数（1~100整数），不是类目商品总数；snapshotTotalUnits为同一截面、同一实际样本的非负 Units 合计。metrics固定6项，依上述顺序，每项仅含 name、short、rawValue、score100、status、source；rawValue为不再人为舍入的数值：指标1为该近30天实际商品样本的每商品月均 Units（直接字段保留提供方返回的数值，明细计算保留商值），须与 snapshotTotalUnits/snapshotSampleCount 在提供方均值字段的精度内一致；指标2为最近12个月Units合计（须等于recentPeriod.total），指标3~6为0~1的小数占比；score100为未舍入的百分制数值；status仅允许“达标”或“未达标”，须与原始阈值比较结果一致。指标1的 source 须写明 Top100 请求的直接字段或明细计算方式，不手写实际商品数量；数量由模板在 snapshotSampleCount<100 时自动展示。name依次固定为本节六项指标名称；short依次固定为“Top100均销、跨年度趋势、品牌集中度、Amazon自营、中国卖家优势、上新红利”。grade仅允许“S”“A”“B”“C”“D”，recommendation须与等级对应的固定建议完全一致；最低单项得分和得分>=70的项数由模板根据六项得分计算，不另行手填。评分明细的关键数值及规则阈值由固定模板根据rawValue、锚点和期间合计生成，不另行手填。monthlyUnits固定24项，每项 {month:"YYYY-MM",units:非负数,sampleCount:1~100整数}，按月份升序且连续；sampleCount为该月 Top100 请求完整返回的实际商品数。previousPeriod/recentPeriod各含 start、end、total。reasons为至少两条带真实数值的字符串；risks为非自动生成的其他可证实风险字符串数组，可为空，不重复六项未达标及指标3/4中高风险的自动提示。JSON中保留未舍入的数值类型；交付前独立核验月份合计、样本数、六项得分与结论、综合等级和建议、总分及风险计数与同一份数据一致；样本数为100时，可见文案不得额外标出实际商品数量。
 此模板只借鉴紫粉色配色、背景、描边和表格视觉；模块及顺序固定沿用类目评分BI：独立标题区、四项总览KPI、并排的得分条形图与雷达图、跨年度月度折线图、评分明细表、综合结论复核。不得添加标题与KPI混排的首排、第二排核心指标或图表外层总面板。无独立“取数口径”面板，来源只在评分明细表。图表指标标签只显示简短名称；跨年度折线图真实横轴为1月到12月，按日历年份着色；缺失月份断线，不补零。HTML不依赖CDN，图表由内嵌 Canvas 绘制。
 
 ```html
@@ -101,6 +101,7 @@ html,body{margin:0;min-height:100%;background:#3a147b}
 #category-bi .legend{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12px}
 #category-bi .legend span{display:inline-flex;align-items:center;gap:5px}
 #category-bi .legend i{width:12px;height:4px;display:inline-block}
+#category-bi .sample-note{margin:8px 2px 0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
 #category-bi .table-wrap{max-width:100%;overflow:auto;scrollbar-color:#ebc8f3 #4a246a;border:1px solid rgba(0,0,0,.35);border-radius:8px}
 #category-bi table{min-width:860px;width:100%;border-collapse:collapse;background:rgba(255,255,255,.06)}
 #category-bi th,#category-bi td{padding:9px 10px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle;line-height:1.45;overflow-wrap:anywhere;text-align:left}
@@ -117,7 +118,7 @@ html,body{margin:0;min-height:100%;background:#3a147b}
 </style>
 </head>
 <body>
-<div id="category-bi"><main class="dash" data-template-version="CATEGORY-BI-ORIGINAL-MODULES-PURPLE-PINK-V9">
+<div id="category-bi"><main class="dash" data-template-version="CATEGORY-BI-ORIGINAL-MODULES-PURPLE-PINK-V10">
 <header class="header"><h1 id="title"></h1><div class="sub" id="subtitle"></div><div class="source-line" id="source"></div></header>
 <section class="kpis" aria-label="类目评分总览">
 <div class="tile kpi total"><div class="v" id="total"></div><div class="l">综合评分</div></div>
@@ -126,7 +127,7 @@ html,body{margin:0;min-height:100%;background:#3a147b}
 <div class="tile kpi decision"><div class="v" id="decision"></div><div class="l">经验筛选等级<br><span id="decision-result"></span></div></div>
 </section>
 <div class="charts" aria-label="评分图表"><section class="panel"><h2>六项得分条形图</h2><div class="chart-scroll"><canvas id="bars" role="img" aria-label="六项得分百分制条形图"></canvas></div></section><section class="panel"><h2>六项得分雷达图</h2><canvas id="radar" role="img" aria-label="六项得分百分制雷达图"></canvas></section></div>
-<section class="panel pink" aria-label="月销量趋势"><h2>跨年度周期月度折线图</h2><div class="periods"><span id="period-previous"></span><span id="period-recent"></span></div><div class="chart-scroll"><canvas id="line" class="line-canvas" role="img" aria-label="按真实月份和日历年份展示的Top100样本月销量趋势"></canvas></div><div class="legend" id="legend"></div></section>
+<section class="panel pink" aria-label="月销量趋势"><h2>跨年度周期月度折线图</h2><div class="periods"><span id="period-previous"></span><span id="period-recent"></span></div><div class="chart-scroll"><canvas id="line" class="line-canvas" role="img" aria-label="按真实月份和日历年份展示的Top100样本月销量趋势"></canvas></div><div class="legend" id="legend"></div><div class="sample-note" id="trend-sample-note" hidden></div></section>
 <section class="panel" aria-label="评分明细"><h2>评分明细表</h2><div class="table-wrap"><table><thead><tr><th>指标</th><th>关键数值</th><th>规则阈值</th><th>得分（百分制）</th><th>结论</th><th>取数位置/口径</th></tr></thead><tbody id="metric-rows"></tbody></table></div></section>
 <section class="panel pink" aria-label="综合结论"><h2>综合结论复核</h2><div class="notes"><div><h3>主要依据</h3><ul id="reasons"></ul></div><div><h3>主要风险</h3><ul id="risks"></ul></div></div><div class="meta" id="meta"></div></section>
 </main></div>
@@ -150,7 +151,7 @@ const DATA = __DASHBOARD_DATA_JSON__;
   check(Number.isInteger(d.snapshotSampleCount)&&d.snapshotSampleCount>=1&&d.snapshotSampleCount<=100&&validNumber(d.snapshotTotalUnits)&&d.snapshotTotalUnits>=0,'指标1样本数或样本销量无效');
   let previousTotal=0,recentTotal=0;
   d.monthlyUnits.forEach((row,i)=>{
-    check(monthIndex(row.month)===anchorIndex-24+i&&validNumber(row.units)&&row.units>=0,'月度月份或销量无效');
+    check(monthIndex(row.month)===anchorIndex-24+i&&validNumber(row.units)&&row.units>=0&&Number.isInteger(row.sampleCount)&&row.sampleCount>=1&&row.sampleCount<=100,'月度月份、销量或样本数无效');
     if(i<12)previousTotal+=row.units;else recentTotal+=row.units;
   });
   check(d.previousPeriod&&d.recentPeriod&&d.previousPeriod.start===d.monthlyUnits[0].month&&d.previousPeriod.end===d.monthlyUnits[11].month&&d.recentPeriod.start===d.monthlyUnits[12].month&&d.recentPeriod.end===d.monthlyUnits[23].month,'跨年度期间不一致');
@@ -161,6 +162,7 @@ const DATA = __DASHBOARD_DATA_JSON__;
     return m.rawValue;
   });
   check(d.metrics[0].source.includes('Top100'),'指标1来源必须说明Top100样本');
+  check(!/(?:实际商品数|样本数|实有)\s*[:：]?\s*100\s*[件个]/.test(d.metrics[0].source),'完整100件时不得重复标出商品数量');
   check(Math.abs(raw[0]-d.snapshotTotalUnits/d.snapshotSampleCount)<1+1e-7,'指标1均值与样本销量不一致');
   check(close(raw[1],recentTotal),'跨年度趋势原始值与期间合计不一致');
   const anchorMonth=Number(d.anchor.slice(5)),targetYear=Number(d.anchor.slice(0,4))-(anchorMonth<=6?1:0),newThreshold=anchorMonth<=6?0.20:0.10;
@@ -178,7 +180,8 @@ const DATA = __DASHBOARD_DATA_JSON__;
   const recommendations={S:'优先进入产品、利润和合规验证',A:'值得进一步验证',B:'有条件地做低成本测试',C:'暂不进入，重点核查短板',D:'暂缓'};
   const recommendation=recommendations[grade];
   check(close(d.total100,totalScore)&&d.grade===grade&&d.highRiskCount===highRiskCount&&d.recommendation===recommendation,'综合评分、筛选等级、高风险计数或建议不一致');
-  const valueLabels=[fmt(raw[0])+' 件/商品/月；样本 '+d.snapshotSampleCount+' 件','前12个月 '+fmt(previousTotal)+' 件；最近12个月 '+fmt(recentTotal)+' 件',...raw.slice(2).map(v=>fixed(v*100)+'%')];
+  const snapshotCountLabel=d.snapshotSampleCount<100?'；Top100实际商品数 '+d.snapshotSampleCount+' 件':'';
+  const valueLabels=[fmt(raw[0])+' 件/商品/月'+snapshotCountLabel,'前12个月 '+fmt(previousTotal)+' 件；最近12个月 '+fmt(recentTotal)+' 件',...raw.slice(2).map(v=>fixed(v*100)+'%')];
   const thresholdLabels=['≥1,500 件/商品/月','最近12个月>0且≥前12个月','<60%','<50%','≥50%',targetYear+'年上架 ≥'+(newThreshold*100)+'%'];
   const autoRisks=d.metrics.flatMap((m,i)=>{
     if(i===2||i===3){
@@ -199,6 +202,11 @@ const DATA = __DASHBOARD_DATA_JSON__;
   q('decision-result').textContent = recommendation;
   q('period-previous').textContent = '前12个月 ' + d.previousPeriod.start + ' 至 ' + d.previousPeriod.end + '：' + fmt(d.previousPeriod.total) + ' 件';
   q('period-recent').textContent = '最近12个月 ' + d.recentPeriod.start + ' 至 ' + d.recentPeriod.end + '：' + fmt(d.recentPeriod.total) + ' 件';
+  const shortTrendMonths=d.monthlyUnits.filter(row=>row.sampleCount<100);
+  if(shortTrendMonths.length){
+    q('trend-sample-note').hidden=false;
+    q('trend-sample-note').textContent='Top100实际商品数不足100的月份：'+shortTrendMonths.map(row=>row.month+' '+row.sampleCount+' 件').join('、')+'。趋势按各月实际样本合计，样本数量变化可能影响跨月比较。';
+  }
   d.metrics.forEach((m,i)=>{
     const tr = document.createElement('tr');
     for (const v of [names[i],valueLabels[i],thresholdLabels[i],fixed(scores[i]) + '%',m.status,m.source]) {
@@ -211,7 +219,7 @@ const DATA = __DASHBOARD_DATA_JSON__;
   for (const [id,items] of [['reasons',d.reasons],['risks',riskItems]]) {
     for (const item of items) { const li=document.createElement('li'); li.textContent=item; q(id).appendChild(li); }
   }
-  q('meta').textContent = '经验筛选不等于直接备货结论｜定位关键词：' + d.sourceKeyword + '｜品牌/自营高风险指标：' + highRiskCount + ' 项｜第一项为近30天Top100样本均值（实有' + d.snapshotSampleCount + '件），趋势为每月各自Top100样本，均非全类目总量';
+  q('meta').textContent = '经验筛选不等于直接备货结论｜定位关键词：' + d.sourceKeyword + '｜品牌/自营高风险指标：' + highRiskCount + ' 项｜第一项为近30天Top100样本均值' + (d.snapshotSampleCount<100?'（实际'+d.snapshotSampleCount+'件）':'') + '，趋势为每月各自Top100样本，均非全类目总量';
 
   function canvas(id) {
     const el=q(id), rect=el.getBoundingClientRect(), ratio=Math.max(1,window.devicePixelRatio||1);
